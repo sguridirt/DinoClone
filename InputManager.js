@@ -11,12 +11,10 @@ class InputManager {
   }
 
   _onKeyUp = (event) => {
-    console.log(this._keysDown)
     this._keysDown[event.key] = false
   }
 
   isKeyDown = (key) => {
-    console.log(this._keysDown)
     return !!this._keysDown[key]
   }
 }
