@@ -1,9 +1,11 @@
 import { Vector2D } from './vector.js'
 import { ResourceLoader } from './ResourceLoader.js'
+import { InputManager } from './InputManager.js'
 
 let canvas
 let context
 let resourceLoader
+let inputManager
 
 class Player {
   constructor() {
@@ -15,7 +17,7 @@ class Player {
     this.jumping = false
   }
 
-  jump() {
+  jump(dt) {
     if (this.jumping) return
 
     this.vel.y = -16
@@ -37,7 +39,7 @@ class Player {
   draw(context) {
     context.drawImage(
       resourceLoader.get('./assets/sprite.png'),
-      1342,
+      1339,
       5,
       84,
       98,
@@ -79,9 +81,7 @@ let gameState = {
   gameOver: 3,
 }
 
-document.addEventListener('keydown', function () {
-  player.jump()
-})
+inputManager = new InputManager()
 
 resourceLoader = new ResourceLoader()
 resourceLoader.load('./assets/sprite.png')
@@ -101,6 +101,11 @@ function setup() {
 }
 
 function update(deltaTime) {
+  // check for jump
+  if (inputManager.isKeyDown('ArrowUp')) {
+    player.jump(deltaTime)
+  }
+
   player.update(deltaTime)
 
   for (let i = 0; i < obstacles.length; i++) {
