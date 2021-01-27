@@ -1,6 +1,7 @@
 import { Vector2D } from './vector.js'
 import { ResourceLoader } from './ResourceLoader.js'
 import { InputManager } from './InputManager.js'
+import { Sprite } from './Sprite.js'
 
 let canvas
 let context
@@ -15,16 +16,34 @@ class Player {
     this.vel = new Vector2D(0, 0)
 
     this.jumping = false
+
+    this.animation = [
+      { sX: 1678, sY: 2 },
+      { sX: 1854, sY: 2 },
+      { sX: 1942, sY: 2 },
+    ]
+    this.index = 0
+    this.frame = null
   }
 
-  jump(dt) {
+  jump() {
     if (this.jumping) return
 
-    this.vel.y = -16
+    this.vel.y = -15
     this.jumping = true
   }
 
-  update(dt) {
+  update() {
+    // animate sprite
+    this.index += 0.25
+    this.frame = this.animation[Math.floor(this.index) % this.animation.length]
+
+    if (this.jumping) {
+      this.frame = this.animation[0]
+    }
+
+    // update speed
+
     this.vel.y += 1 //gravity
 
     this.pos.y += this.vel.y
@@ -39,10 +58,10 @@ class Player {
   draw(context) {
     context.drawImage(
       resourceLoader.get('./assets/sprite.png'),
-      1339,
-      5,
-      84,
-      98,
+      this.frame.sX,
+      this.frame.sY,
+      88,
+      94,
       this.pos.x,
       this.pos.y,
       this.w,
@@ -59,7 +78,7 @@ class Obstacle {
   }
 
   update() {
-    this.pos.x -= 5
+    this.pos.x -= 10
   }
 
   draw() {
@@ -93,6 +112,7 @@ function setup() {
 
   canvas.width = 800
   canvas.height = 200
+  canvas.style.background = 'black'
 
   player = new Player()
   obstacles.push(new Obstacle(canvas.width + 200, canvas.height, 40, 60))
@@ -100,17 +120,16 @@ function setup() {
   gameLoop()
 }
 
-function update(deltaTime) {
-  // check for jump
+function update() {
   if (inputManager.isKeyDown('ArrowUp')) {
-    player.jump(deltaTime)
+    player.jump()
   }
 
-  player.update(deltaTime)
+  player.update()
 
   for (let i = 0; i < obstacles.length; i++) {
     const obstacle = obstacles[i]
-    obstacle.update(deltaTime)
+    obstacle.update()
     // the value below needs to be a multiple of the speed
     if (obstacle.pos.x === 250) {
       obstacles.push(new Obstacle(canvas.width, canvas.height))
@@ -131,7 +150,7 @@ function update(deltaTime) {
         obstacle.h
       )
     ) {
-      console.log('Collide!')
+      // console.log('Collide!')
     }
   }
 }
@@ -146,14 +165,9 @@ function render() {
   player.draw(context)
 }
 
-var lastTime
 function gameLoop() {
-  var now = Date.now()
-  var deltaTime = (now - lastTime) / 1000.0
-
-  update(deltaTime)
+  update()
   render()
 
-  lastTime = now
   requestAnimationFrame(gameLoop)
 }
