@@ -2,6 +2,7 @@ import { Vector2D } from './vector.js'
 import { ResourceLoader } from './ResourceLoader.js'
 import { InputManager } from './InputManager.js'
 import { Sprite } from './Sprite.js'
+import { getRandomInt } from './utils.js'
 
 let canvas
 let context
@@ -71,10 +72,36 @@ class Player {
 }
 
 class Obstacle {
-  constructor(x, y) {
-    this.w = 40
-    this.h = 60
-    this.pos = new Vector2D(x, y - this.h - 4)
+  TYPES = {
+    SMALL_CACTUS: {
+      w: 40,
+      h: 55,
+      sprite: {
+        sX: 448,
+        sY: 2,
+        w: 32,
+        h: 72,
+      },
+    },
+    BIG_CACTUS: {
+      w: 50,
+      h: 65,
+      sprite: {
+        sX: 652,
+        sY: 2,
+        w: 50,
+        h: 102,
+      },
+    },
+  }
+
+  constructor(x, y, type) {
+    this.type = this.TYPES[type]
+    this.w = this.type.w
+    this.h = this.type.h
+    this.pos = new Vector2D(x, y - this.h)
+    this.followingObstacleCreated = false
+    this.gap = getRandomInt(300, 600)
   }
 
   update() {
@@ -82,8 +109,17 @@ class Obstacle {
   }
 
   draw() {
-    context.fillStyle = 'grey'
-    context.fillRect(this.pos.x, this.pos.y, this.w, this.h)
+    context.drawImage(
+      resourceLoader.get('./assets/sprite.png'),
+      this.type.sprite.sX,
+      this.type.sprite.sY,
+      this.type.sprite.w,
+      this.type.sprite.h,
+      this.pos.x,
+      this.pos.y,
+      this.type.w,
+      this.type.h
+    )
   }
 }
 
@@ -106,16 +142,29 @@ resourceLoader = new ResourceLoader()
 resourceLoader.load('./assets/sprite.png')
 resourceLoader.onReady(setup)
 
+function spawnObstacle() {
+  // console.log(obstacles)
+  let type = getRandomInt(0, 2, true)
+  let obstacle
+
+  if (type === 1) {
+    obstacle = new Obstacle(canvas.width, canvas.height, 'SMALL_CACTUS')
+  } else {
+    obstacle = new Obstacle(canvas.width, canvas.height, 'BIG_CACTUS')
+  }
+
+  obstacles.push(obstacle)
+}
+
 function setup() {
   canvas = document.getElementById('game-canvas')
   context = canvas.getContext('2d')
 
-  canvas.width = 800
+  canvas.width = window.innerWidth
   canvas.height = 200
-  canvas.style.background = 'black'
 
   player = new Player()
-  obstacles.push(new Obstacle(canvas.width + 200, canvas.height, 40, 60))
+  spawnObstacle()
 
   gameLoop()
 }
@@ -131,8 +180,12 @@ function update() {
     const obstacle = obstacles[i]
     obstacle.update()
     // the value below needs to be a multiple of the speed
-    if (obstacle.pos.x === 250) {
-      obstacles.push(new Obstacle(canvas.width, canvas.height))
+    if (
+      obstacle.pos.x + obstacle.w + obstacle.gap < canvas.width &&
+      !obstacle.followingObstacleCreated
+    ) {
+      spawnObstacle()
+      obstacle.followingObstacleCreated = true
     }
     if (obstacle.pos.x + obstacle.w <= 0) {
       obstacles.splice(i, 1)
@@ -150,7 +203,7 @@ function update() {
         obstacle.h
       )
     ) {
-      // console.log('Collide!')
+      console.log('Collide!')
     }
   }
 }
